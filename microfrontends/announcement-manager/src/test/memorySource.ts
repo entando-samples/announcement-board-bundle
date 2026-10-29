@@ -1,7 +1,7 @@
 import type { Announcement, AnnouncementInput, Page } from '../types';
-import type { ManagerSource } from './source';
+import type { ManagerSource } from '../api/source';
 
-// In-browser store used until the manager is connected to announcement-ms (step 13).
+// In-memory ManagerSource used as a test double.
 export function createMemorySource(seed: Announcement[] = []): ManagerSource {
   let items = [...seed];
   let nextId = items.reduce((max, a) => Math.max(max, a.id), 0) + 1;

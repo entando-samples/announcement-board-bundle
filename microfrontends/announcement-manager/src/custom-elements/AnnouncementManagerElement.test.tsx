@@ -1,20 +1,36 @@
 import { act } from 'react';
 import { screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ELEMENT_NAME } from './AnnouncementManagerElement';
 
+const CONFIG = JSON.stringify({ systemParams: { api: { 'announcement-api': { url: 'http://ms.test/' } } } });
+const EMPTY_PAGE = { items: [], page: 0, size: 20, totalItems: 0, totalPages: 0 };
+
 describe('<announcement-manager>', () => {
-  it('mounts on connect and unmounts on disconnect', async () => {
-    expect(customElements.get(ELEMENT_NAME)).toBeDefined();
+  it('reports a missing API claim', async () => {
     const element = document.createElement(ELEMENT_NAME);
     await act(async () => {
       document.body.appendChild(element);
     });
+    expect(screen.getByRole('alert')).toHaveTextContent('missing API claim “announcement-api”');
+  });
+
+  it('mounts with a configured claim and unmounts on disconnect', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(EMPTY_PAGE)));
+    vi.stubGlobal('fetch', fetchMock);
+    const element = document.createElement(ELEMENT_NAME);
+    element.setAttribute('config', CONFIG);
+    await act(async () => {
+      document.body.appendChild(element);
+    });
+
     expect(screen.getByRole('heading', { name: 'Manage announcements' })).toBeInTheDocument();
+    expect(fetchMock.mock.calls[0][0]).toBe('http://ms.test/api/announcements?page=0&size=20');
 
     await act(async () => {
       element.remove();
     });
     expect(element.childNodes).toHaveLength(0);
+    vi.unstubAllGlobals();
   });
 });

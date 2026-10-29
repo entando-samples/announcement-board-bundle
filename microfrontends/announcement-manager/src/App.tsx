@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { MfeConfig } from './config';
 import type { ManagerSource } from './api/source';
-import { createMemorySource } from './api/memorySource';
+import { API_CLAIM, apiBaseUrl } from './api/http';
+import { createHttpSource } from './api/httpSource';
 import type { Announcement, AnnouncementInput, Page } from './types';
 import AnnouncementTable from './components/AnnouncementTable';
 import AnnouncementForm from './components/AnnouncementForm';
@@ -20,8 +21,26 @@ type ListState =
 
 type Editing = { mode: 'closed' } | { mode: 'create' } | { mode: 'edit'; announcement: Announcement };
 
-export default function App({ source: providedSource }: AppProps) {
-  const source = useMemo(() => providedSource ?? createMemorySource(), [providedSource]);
+export default function App({ config, source: providedSource }: AppProps) {
+  const baseUrl = apiBaseUrl(config);
+  const source = useMemo(
+    () => providedSource ?? (baseUrl ? createHttpSource(baseUrl) : undefined),
+    [providedSource, baseUrl],
+  );
+
+  if (!source) {
+    return (
+      <section className="announcement-manager" aria-label="Announcement manager">
+        <p className="announcement-manager__error" role="alert">
+          The announcement service is not configured (missing API claim “{API_CLAIM}”).
+        </p>
+      </section>
+    );
+  }
+  return <Manager source={source} />;
+}
+
+function Manager({ source }: { source: ManagerSource }) {
   const [list, setList] = useState<ListState>({ status: 'loading' });
   const [editing, setEditing] = useState<Editing>({ mode: 'closed' });
   const [notice, setNotice] = useState<string>();

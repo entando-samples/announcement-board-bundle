@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import App from './App';
-import { createMemorySource } from './api/memorySource';
+import { createMemorySource } from './test/memorySource';
 import type { ManagerSource } from './api/source';
 
 async function fillForm(title: string) {

@@ -19,7 +19,14 @@
                 "it": "Bacheca Annunci"
             },
             "buildFolder": "dist",
-            "category": "Announcements"
+            "category": "Announcements",
+            "apiClaims": [
+                {
+                    "name": "announcement-api",
+                    "type": "internal",
+                    "serviceName": "announcement-ms"
+                }
+            ]
         },
         {
             "name": "announcement-manager",
@@ -33,12 +40,19 @@
                 "it": "Gestione Annunci"
             },
             "buildFolder": "dist",
-            "category": "Announcements"
+            "category": "Announcements",
+            "apiClaims": [
+                {
+                    "name": "announcement-api",
+                    "type": "internal",
+                    "serviceName": "announcement-ms"
+                }
+            ]
         }
     ],
     "svc": [],
     "name": "training26",
-    "version": "0.3.2",
+    "version": "0.4.0",
     "description": "Announcement Board: Entando 7.5 developer training bundle (E101, Day 2)",
     "type": "bundle",
     "displayName": "Announcement Board"

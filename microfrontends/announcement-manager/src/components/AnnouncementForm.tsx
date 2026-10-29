@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { CATEGORIES, STATUSES, type AnnouncementInput } from '../types';
 import { validateInput, type FieldErrors } from '../validation';
+import { ApiError } from '../api/http';
 
 interface AnnouncementFormProps {
   initial?: AnnouncementInput;
@@ -54,6 +55,9 @@ export default function AnnouncementForm({ initial, onSubmit, onCancel }: Announ
         body: values.body.trim(),
       });
     } catch (error) {
+      if (error instanceof ApiError) {
+        setErrors(error.fieldErrors as FieldErrors);
+      }
       setSubmitError((error as Error).message);
     } finally {
       setSaving(false);

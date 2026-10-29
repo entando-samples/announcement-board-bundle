@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { MfeConfig } from './config';
 import type { AnnouncementSource } from './api/source';
-import { mockSource } from './api/mockSource';
+import { API_CLAIM, apiBaseUrl } from './api/http';
+import { createHttpSource } from './api/httpSource';
 import type { AnnouncementSummary, Category, Page } from './types';
 import SearchForm from './components/SearchForm';
 import AnnouncementList from './components/AnnouncementList';
@@ -19,7 +20,26 @@ type Results =
   | { status: 'error'; message: string }
   | { status: 'ready'; data: Page<AnnouncementSummary> };
 
-export default function App({ source = mockSource }: AppProps) {
+export default function App({ config, source: providedSource }: AppProps) {
+  const baseUrl = apiBaseUrl(config);
+  const source = useMemo(
+    () => providedSource ?? (baseUrl ? createHttpSource(baseUrl) : undefined),
+    [providedSource, baseUrl],
+  );
+
+  if (!source) {
+    return (
+      <section className="announcement-board" aria-label="Announcements">
+        <p className="announcement-board__status announcement-board__status--error" role="alert">
+          The announcement service is not configured (missing API claim “{API_CLAIM}”).
+        </p>
+      </section>
+    );
+  }
+  return <Board source={source} />;
+}
+
+function Board({ source }: { source: AnnouncementSource }) {
   const [q, setQ] = useState('');
   const [category, setCategory] = useState<Category | undefined>();
   const [page, setPage] = useState(0);
