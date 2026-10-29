@@ -1,0 +1,71 @@
+/* Every rule is scoped to the widget root so the portal page is never restyled. */
+.announcement-manager {
+  font-family: system-ui, sans-serif;
+  color: #1f2933;
+}
+
+.announcement-manager__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.announcement-manager button,
+.announcement-manager input,
+.announcement-manager select,
+.announcement-manager textarea {
+  font: inherit;
+  padding: 0.35rem 0.6rem;
+}
+
+.announcement-manager__form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 40rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid #d9e2ec;
+  border-radius: 0.375rem;
+}
+
+.announcement-manager__form label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.announcement-manager__field-error,
+.announcement-manager__error {
+  color: #b42318;
+  font-weight: 400;
+}
+
+.announcement-manager__notice {
+  color: #1d6b3a;
+}
+
+.announcement-manager__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.announcement-manager__table th,
+.announcement-manager__table td {
+  text-align: left;
+  padding: 0.4rem;
+  border-bottom: 1px solid #d9e2ec;
+}
+
+.announcement-manager__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.announcement-manager__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

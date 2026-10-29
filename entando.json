@@ -14,11 +14,25 @@
             },
             "buildFolder": "dist",
             "category": "Announcements"
+        },
+        {
+            "name": "announcement-manager",
+            "customElement": "announcement-manager",
+            "stack": "react",
+            "type": "widget",
+            "group": "free",
+            "publicFolder": "public",
+            "titles": {
+                "en": "Announcement Manager",
+                "it": "Gestione Annunci"
+            },
+            "buildFolder": "dist",
+            "category": "Announcements"
         }
     ],
     "svc": [],
     "name": "training26",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Announcement Board: Entando 7.5 developer training bundle (E101, Day 2)",
     "type": "bundle",
     "displayName": "Announcement Board"
