@@ -1,5 +1,6 @@
 package org.entando.training.announcement.config;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -9,6 +10,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * CORS is a browser relaxation, not access control.
  */
 @Configuration
+@EnableConfigurationProperties(CorsProperties.class)
 public class CorsConfig implements WebMvcConfigurer {
 
     private final CorsProperties properties;

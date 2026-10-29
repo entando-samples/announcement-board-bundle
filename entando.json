@@ -38,7 +38,7 @@
     ],
     "svc": [],
     "name": "training26",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "description": "Announcement Board: Entando 7.5 developer training bundle (E101, Day 2)",
     "type": "bundle",
     "displayName": "Announcement Board"
