@@ -21,22 +21,41 @@ export function apiBaseUrl(config: MfeConfig): string | undefined {
   return url ? url.replace(/\/+$/, '') : undefined;
 }
 
+/** Supplies an access token; `forceRefresh` asks for a new one after a 401. */
+export type TokenProvider = (forceRefresh?: boolean) => Promise<string | undefined>;
+
+export interface RequestOptions {
+  token?: TokenProvider;
+  fetchImpl?: typeof fetch;
+}
+
 export async function requestJson<T>(
   url: string,
   init: RequestInit = {},
-  fetchImpl?: typeof fetch,
+  { token, fetchImpl }: RequestOptions = {},
 ): Promise<T> {
-  const headers = new Headers(init.headers);
-  headers.set('Accept', 'application/json');
-  if (init.body) {
-    headers.set('Content-Type', 'application/json');
-  }
-  let response: Response;
-  try {
-    // Resolve fetch per call so test doubles installed later are honoured.
-    response = await (fetchImpl ?? fetch)(url, { ...init, headers });
-  } catch {
-    throw new ApiError(0, 'The announcement service is unreachable.');
+  const send = async (forceRefresh: boolean) => {
+    const headers = new Headers(init.headers);
+    headers.set('Accept', 'application/json');
+    if (init.body) {
+      headers.set('Content-Type', 'application/json');
+    }
+    const accessToken = token && (await token(forceRefresh));
+    if (accessToken) {
+      headers.set('Authorization', `Bearer ${accessToken}`);
+    }
+    try {
+      // Resolve fetch per call so test doubles installed later are honoured.
+      return await (fetchImpl ?? fetch)(url, { ...init, headers });
+    } catch {
+      throw new ApiError(0, 'The announcement service is unreachable.');
+    }
+  };
+
+  let response = await send(false);
+  if (response.status === 401 && token) {
+    // The token may have expired in flight: refresh once and retry.
+    response = await send(true);
   }
   if (!response.ok) {
     throw await toApiError(response);

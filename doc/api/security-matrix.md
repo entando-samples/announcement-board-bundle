@@ -32,3 +32,20 @@ S12 (403 for a missing role) applies only if the optional editor role is enabled
 
 - Backend: `PublicAccessIntegrationTest` — every operation works anonymously.
 - Postman, local environment: 15 requests, 32 assertions, 0 failures.
+
+## Phase B results (step 20)
+
+- Backend: `SecurityIntegrationTest` (46 cases, real RS256 tokens signed with
+  a test key: valid, expired, bad signature, wrong issuer, malformed) and
+  `AnnouncementControllerTest` with the real security configuration.
+- MFEs: board and manager tests with a fake shared Keycloak adapter (search
+  without token, detail and management with token, refresh-and-retry on 401,
+  sign-in prompts, data hidden after sign-out).
+- Live, local Keycloak `entando-dev` + PostgreSQL (`tests/api/run-secured.sh`):
+  37 requests, 92 assertions, 0 failures.
+- Browser (local containers, real Keycloak sign-in): manager hidden when signed
+  out, CRUD with token when signed in; board search anonymous, "Read more"
+  asks to sign in when signed out and shows the body when signed in.
+
+Note: an expired token is accepted for up to 60 s after `exp` (Spring
+Security's default clock skew), see ADR-003.

@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { ApiError, apiBaseUrl } from './http';
 import { createHttpSource } from './httpSource';
 
@@ -81,5 +81,76 @@ describe('board HTTP source', () => {
     const error = await source.search({ page: 0, size: 10 }).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({ status: 0, message: 'The announcement service is unreachable.' });
+  });
+});
+
+describe('board HTTP source with authentication', () => {
+  it('never sends a token to the public search, even when one is available', async () => {
+    let authorization: string | null = 'unset';
+    server.use(
+      http.get(`${BASE}/api/announcements/search`, ({ request }) => {
+        authorization = request.headers.get('Authorization');
+        return HttpResponse.json({ items: [], page: 0, size: 10, totalItems: 0, totalPages: 0 });
+      }),
+    );
+    await createHttpSource(BASE, { token: async () => 'secret-token' }).search({ page: 0, size: 10 });
+    expect(authorization).toBeNull();
+  });
+
+  it('sends the bearer token on the protected detail call', async () => {
+    let authorization: string | null = null;
+    server.use(
+      http.get(`${BASE}/api/announcements/7`, ({ request }) => {
+        authorization = request.headers.get('Authorization');
+        return HttpResponse.json({ id: 7, body: 'b' });
+      }),
+    );
+    await createHttpSource(BASE, { token: async () => 'token-1' }).getDetail(7);
+    expect(authorization).toBe('Bearer token-1');
+  });
+
+  it('refreshes the token once after a 401 and retries', async () => {
+    const seen: (string | null)[] = [];
+    server.use(
+      http.get(`${BASE}/api/announcements/7`, ({ request }) => {
+        seen.push(request.headers.get('Authorization'));
+        return seen.length === 1
+          ? HttpResponse.json({ detail: 'expired' }, { status: 401 })
+          : HttpResponse.json({ id: 7, body: 'b' });
+      }),
+    );
+    const token = vi.fn(async (force?: boolean) => (force ? 'token-2' : 'token-1'));
+
+    expect((await createHttpSource(BASE, { token }).getDetail(7)).body).toBe('b');
+    expect(seen).toEqual(['Bearer token-1', 'Bearer token-2']);
+    expect(token).toHaveBeenLastCalledWith(true);
+  });
+
+  it('gives up with a 401 ApiError after one retry', async () => {
+    let calls = 0;
+    server.use(
+      http.get(`${BASE}/api/announcements/7`, () => {
+        calls += 1;
+        return HttpResponse.json({ detail: 'A valid bearer token is required.' }, { status: 401 });
+      }),
+    );
+    await expect(createHttpSource(BASE, { token: async () => 'stale' }).getDetail(7)).rejects.toMatchObject({
+      status: 401,
+    });
+    expect(calls).toBe(2);
+  });
+
+  it('sends no Authorization header when signed out', async () => {
+    let authorization: string | null = 'unset';
+    server.use(
+      http.get(`${BASE}/api/announcements/7`, ({ request }) => {
+        authorization = request.headers.get('Authorization');
+        return HttpResponse.json({ detail: 'A valid bearer token is required.' }, { status: 401 });
+      }),
+    );
+    await expect(createHttpSource(BASE, { token: async () => undefined }).getDetail(7)).rejects.toBeInstanceOf(
+      ApiError,
+    );
+    expect(authorization).toBeNull();
   });
 });

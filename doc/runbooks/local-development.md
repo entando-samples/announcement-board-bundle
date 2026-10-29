@@ -56,8 +56,15 @@ the bookmarks used during the course never change.
 - Deployed: widgets and the microservice ingress share the application host,
   so requests are same-origin and CORS does not apply. Verify on the first
   deployment (step 13).
+- From step 20 the browser also sends `Authorization`; the CORS policy allows
+  that header and preflight requests need no token.
 - CORS is **not** security: curl, Postman and server-side callers ignore it.
-  Authentication is added in step 20.
+  Authentication is enforced by the microservice from step 20.
+
+## Authentication (from step 20)
+
+See `keycloak.md`: `ent bundle svc start keycloak`, then sign in from the bar
+at the top of the local widget pages.
 
 ## Smoke test
 

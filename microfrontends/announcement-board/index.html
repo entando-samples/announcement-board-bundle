@@ -12,6 +12,42 @@
     </style>
   </head>
   <body>
+    <div id="dev-auth-bar" style="font: 14px system-ui, sans-serif; padding: 6px 8px; background: #eef2f7">
+      Local container (stands in for the Entando page):
+      <span id="dev-auth-user">Keycloak not initialised</span>
+      <button type="button" id="dev-login" hidden>Sign in</button>
+      <button type="button" id="dev-logout" hidden>Sign out</button>
+    </div>
+    <!-- Like an Entando page, the container initialises Keycloak ONCE and shares it
+         on window.entando.keycloak; widgets only read it and listen to "keycloak"
+         window events. Requires: ent bundle svc start keycloak (realm entando-dev). -->
+    <script src="http://localhost:9080/auth/js/keycloak.js"></script>
+    <script>
+      (function initSharedKeycloak() {
+        const user = document.getElementById('dev-auth-user');
+        if (typeof Keycloak === 'undefined') {
+          user.textContent = 'Keycloak is not running: protected operations will fail';
+          return;
+        }
+        const keycloak = new Keycloak({ url: 'http://localhost:9080/auth', realm: 'entando-dev', clientId: 'web_app' });
+        const emit = (eventType) => window.dispatchEvent(new CustomEvent('keycloak', { detail: { eventType } }));
+        ['onReady', 'onAuthSuccess', 'onAuthError', 'onAuthRefreshSuccess', 'onAuthRefreshError', 'onAuthLogout', 'onTokenExpired']
+          .forEach((name) => { keycloak[name] = () => emit(name); });
+        window.entando = { ...(window.entando || {}), keycloak };
+        const login = document.getElementById('dev-login');
+        const logout = document.getElementById('dev-logout');
+        login.addEventListener('click', () => keycloak.login());
+        logout.addEventListener('click', () => keycloak.logout());
+        keycloak.init({ onLoad: 'check-sso', pkceMethod: 'S256', checkLoginIframe: false })
+          .then((authenticated) => {
+            user.textContent = authenticated ? 'Signed in as ' + keycloak.tokenParsed.preferred_username : 'Signed out';
+            login.hidden = authenticated;
+            logout.hidden = !authenticated;
+            emit('onInit');
+          })
+          .catch(() => { user.textContent = 'Keycloak initialisation failed'; });
+      })();
+    </script>
     <h2>Portal heading styled by page CSS</h2>
     <announcement-board></announcement-board>
     <script>

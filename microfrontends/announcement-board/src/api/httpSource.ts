@@ -1,9 +1,19 @@
+import { getAccessToken } from '../auth/keycloak';
 import type { AnnouncementDetail, AnnouncementSummary, Page, SearchQuery } from '../types';
-import { getJson } from './http';
+import { getJson, type TokenProvider } from './http';
 import type { AnnouncementSource } from './source';
 
-export function createHttpSource(baseUrl: string, fetchImpl?: typeof fetch): AnnouncementSource {
+interface HttpSourceOptions {
+  fetchImpl?: typeof fetch;
+  token?: TokenProvider;
+}
+
+export function createHttpSource(
+  baseUrl: string,
+  { fetchImpl, token = getAccessToken }: HttpSourceOptions = {},
+): AnnouncementSource {
   return {
+    /** Public search: never sends credentials. */
     search({ q, category, page, size }: SearchQuery) {
       const params = new URLSearchParams({ page: String(page), size: String(size) });
       if (q) {
@@ -12,10 +22,11 @@ export function createHttpSource(baseUrl: string, fetchImpl?: typeof fetch): Ann
       if (category) {
         params.set('category', category);
       }
-      return getJson<Page<AnnouncementSummary>>(`${baseUrl}/api/announcements/search?${params}`, fetchImpl);
+      return getJson<Page<AnnouncementSummary>>(`${baseUrl}/api/announcements/search?${params}`, { fetchImpl });
     },
+    /** Protected from step 20: sends the signed-in user's access token. */
     getDetail(id: number) {
-      return getJson<AnnouncementDetail>(`${baseUrl}/api/announcements/${id}`, fetchImpl);
+      return getJson<AnnouncementDetail>(`${baseUrl}/api/announcements/${id}`, { fetchImpl, token });
     },
   };
 }

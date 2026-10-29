@@ -42,7 +42,18 @@ Every step is a commit tagged `step-NN`; `git checkout step-NN` gives the
 repository state at the end of that step. See `doc/labs/steps.md`.
 
 API security: steps 1–19 are intentionally PUBLIC; step 20 protects every
-operation except `GET /api/announcements/search` (and the health probe).
+operation except `GET /api/announcements/search` (and the health probe) with
+the Keycloak realm of the Entando application (`doc/adr/ADR-003-…`).
+
+## Quick start (local)
+
+    ent bundle svc start postgresql keycloak
+    (cd microservices/announcement-ms && mvn spring-boot:run)
+    (cd microfrontends/announcement-board && npm install && npm start)     # :5173
+    (cd microfrontends/announcement-manager && npm install && npm start)   # :5174
+
+Sign in with admin / admin from the bar at the top of the local pages.
+Verify: `mvn test`, `npm run verify` in each MFE, `tests/api/run-secured.sh`.
 
 ## Documentation
 

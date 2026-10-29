@@ -1,18 +1,23 @@
 import { useState } from 'react';
+import { ApiError } from '../api/http';
 import type { AnnouncementDetail, AnnouncementSummary } from '../types';
 
 interface AnnouncementListProps {
   items: AnnouncementSummary[];
   locale: string;
+  /** Full details are protected: signed-out users are asked to sign in instead. */
+  authenticated: boolean;
+  onSignIn: () => void;
   loadDetail: (id: number) => Promise<AnnouncementDetail>;
 }
 
 type DetailState =
+  | { status: 'signInRequired' }
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'ready'; body: string };
 
-export default function AnnouncementList({ items, locale, loadDetail }: AnnouncementListProps) {
+export default function AnnouncementList({ items, locale, authenticated, onSignIn, loadDetail }: AnnouncementListProps) {
   const [details, setDetails] = useState<Record<number, DetailState>>({});
   const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
 
@@ -21,11 +26,21 @@ export default function AnnouncementList({ items, locale, loadDetail }: Announce
   }
 
   const readMore = (id: number) => {
+    if (!authenticated) {
+      setDetails((current) => ({ ...current, [id]: { status: 'signInRequired' } }));
+      return;
+    }
     setDetails((current) => ({ ...current, [id]: { status: 'loading' } }));
     loadDetail(id)
       .then((detail) => setDetails((current) => ({ ...current, [id]: { status: 'ready', body: detail.body } })))
       .catch((error: Error) =>
-        setDetails((current) => ({ ...current, [id]: { status: 'error', message: error.message } })),
+        setDetails((current) => ({
+          ...current,
+          [id]:
+            error instanceof ApiError && error.status === 401
+              ? { status: 'signInRequired' }
+              : { status: 'error', message: error.message },
+        })),
       );
   };
 
@@ -43,6 +58,14 @@ export default function AnnouncementList({ items, locale, loadDetail }: Announce
               <button type="button" onClick={() => readMore(item.id)}>
                 Read more
               </button>
+            )}
+            {detail?.status === 'signInRequired' && (
+              <p className="announcement-board__signin">
+                Sign in to read the full announcement.{' '}
+                <button type="button" onClick={onSignIn}>
+                  Sign in
+                </button>
+              </p>
             )}
             {detail?.status === 'loading' && <p className="announcement-board__status">Loading…</p>}
             {detail?.status === 'error' && (

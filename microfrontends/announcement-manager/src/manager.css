@@ -43,6 +43,11 @@
   color: #b42318;
 }
 
+.announcement-manager__user {
+  margin-left: auto;
+  color: #52606d;
+}
+
 .announcement-manager__notice {
   color: #1d6b3a;
 }

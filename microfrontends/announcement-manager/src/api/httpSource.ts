@@ -1,26 +1,33 @@
+import { getAccessToken } from '../auth/keycloak';
 import type { Announcement, AnnouncementInput, Page } from '../types';
-import { requestJson } from './http';
+import { requestJson, type TokenProvider } from './http';
 import type { ManagerSource } from './source';
 
-export function createHttpSource(baseUrl: string, fetchImpl?: typeof fetch): ManagerSource {
+interface HttpSourceOptions {
+  fetchImpl?: typeof fetch;
+  token?: TokenProvider;
+}
+
+/** Every management operation is protected from step 20 and sends the access token. */
+export function createHttpSource(
+  baseUrl: string,
+  { fetchImpl, token = getAccessToken }: HttpSourceOptions = {},
+): ManagerSource {
   const collection = `${baseUrl}/api/announcements`;
+  const options = { fetchImpl, token };
   return {
     list(page, size) {
       const params = new URLSearchParams({ page: String(page), size: String(size) });
-      return requestJson<Page<Announcement>>(`${collection}?${params}`, {}, fetchImpl);
+      return requestJson<Page<Announcement>>(`${collection}?${params}`, {}, options);
     },
     create(input: AnnouncementInput) {
-      return requestJson<Announcement>(collection, { method: 'POST', body: JSON.stringify(input) }, fetchImpl);
+      return requestJson<Announcement>(collection, { method: 'POST', body: JSON.stringify(input) }, options);
     },
     update(id, input) {
-      return requestJson<Announcement>(
-        `${collection}/${id}`,
-        { method: 'PUT', body: JSON.stringify(input) },
-        fetchImpl,
-      );
+      return requestJson<Announcement>(`${collection}/${id}`, { method: 'PUT', body: JSON.stringify(input) }, options);
     },
     remove(id) {
-      return requestJson<void>(`${collection}/${id}`, { method: 'DELETE' }, fetchImpl);
+      return requestJson<void>(`${collection}/${id}`, { method: 'DELETE' }, options);
     },
   };
 }

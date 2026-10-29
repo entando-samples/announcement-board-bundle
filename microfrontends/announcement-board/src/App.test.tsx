@@ -2,7 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import App from './App';
+import { ApiError } from './api/http';
 import { fakeSource, pageOf, SUMMARY } from './test/fakeSource';
+import { removeKeycloak, signIn, signedOut } from './test/fakeKeycloak';
 
 describe('board App', () => {
   it('shows loading, then the search results', async () => {
@@ -38,13 +40,46 @@ describe('board App', () => {
     expect(source.search).toHaveBeenLastCalledWith({ q: 'maintenance', category: 'MAINTENANCE', page: 0, size: 10 });
   });
 
-  it('loads the full body on "Read more"', async () => {
+  it('loads the full body on "Read more" when signed in', async () => {
+    await signIn();
     const source = fakeSource();
     render(<App config={{}} source={source} />);
     await userEvent.click(await screen.findByRole('button', { name: 'Read more' }));
 
     expect(await screen.findByText('Full maintenance details.')).toBeInTheDocument();
     expect(source.getDetail).toHaveBeenCalledWith(SUMMARY.id);
+    removeKeycloak();
+  });
+
+  it('asks signed-out users to sign in instead of loading the detail', async () => {
+    const keycloak = await signedOut();
+    const source = fakeSource();
+    render(<App config={{}} source={source} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Read more' }));
+
+    expect(screen.getByText('Sign in to read the full announcement.')).toBeInTheDocument();
+    expect(source.getDetail).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(keycloak.login).toHaveBeenCalled();
+    removeKeycloak();
+  });
+
+  it('asks to sign in again when the detail call is rejected with 401', async () => {
+    await signIn();
+    const source = fakeSource();
+    source.getDetail.mockRejectedValue(new ApiError(401, 'A valid bearer token is required.'));
+    render(<App config={{}} source={source} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Read more' }));
+
+    expect(await screen.findByText('Sign in to read the full announcement.')).toBeInTheDocument();
+    expect(screen.queryByText('Full maintenance details.')).not.toBeInTheDocument();
+    removeKeycloak();
+  });
+
+  it('keeps the public search working without Keycloak on the page', async () => {
+    removeKeycloak();
+    render(<App config={{}} source={fakeSource()} />);
+    expect(await screen.findByRole('heading', { name: SUMMARY.title })).toBeInTheDocument();
   });
 
   it('pages through results', async () => {

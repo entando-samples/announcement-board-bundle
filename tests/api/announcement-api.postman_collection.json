@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "1a71f7c5-1379-5c0f-8d1a-49673a8d924e",
+    "_postman_id": "7e30e103-c641-530d-b3c0-8f3b9368307c",
     "name": "announcement-ms API regression",
-    "description": "Phase A (steps 10-19): every operation is anonymous by design.",
+    "description": "Phase B (step 20+): only GET /api/announcements/search (and /api/health) are anonymous; needs accessToken and expiredToken in the environment (see doc/runbooks/keycloak.md).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -42,7 +42,13 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('status 200', () => pm.response.to.have.status(200));"
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
                 ]
               }
             }
@@ -172,11 +178,110 @@
             ],
             "url": "{{baseUrl}}/api/announcements/search?category=PARTY"
           }
+        },
+        {
+          "name": "Search with valid token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('summaries only: no body, status or author', () => {",
+                  "  pm.response.json().items.forEach((item) => {",
+                  "    pm.expect(item).to.have.all.keys('id', 'title', 'summary', 'category', 'publishedAt');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/search"
+          }
+        },
+        {
+          "name": "Search with malformed token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('summaries only: no body, status or author', () => {",
+                  "  pm.response.json().items.forEach((item) => {",
+                  "    pm.expect(item).to.have.all.keys('id', 'title', 'summary', 'category', 'publishedAt');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer not.a.valid.token"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/search"
+          }
+        },
+        {
+          "name": "Search with expired token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('summaries only: no body, status or author', () => {",
+                  "  pm.response.json().items.forEach((item) => {",
+                  "    pm.expect(item).to.have.all.keys('id', 'title', 'summary', 'category', 'publishedAt');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{expiredToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/search"
+          }
         }
       ]
     },
     {
-      "name": "03 Management lifecycle (anonymous in Phase A)",
+      "name": "03 Management lifecycle (authenticated)",
       "item": [
         {
           "name": "Create draft",
@@ -200,7 +305,7 @@
                   "pm.collectionVariables.set('announcementId', created.id);",
                   "pm.test('Location header', () => pm.expect(pm.response.headers.get('Location')).to.match(new RegExp('/api/announcements/' + created.id + '$')));",
                   "pm.test('draft has no publication date', () => pm.expect(created.publishedAt).to.eql(null));",
-                  "pm.test('anonymous author', () => pm.expect(pm.response.json().createdBy).to.eql('anonymous'));"
+                  "pm.test('author from token', () => pm.expect(pm.response.json().createdBy).to.not.eql('anonymous'));"
                 ]
               }
             }
@@ -215,6 +320,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
               }
             ],
             "url": "{{baseUrl}}/api/announcements",
@@ -269,6 +378,10 @@
               {
                 "key": "Accept",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
               }
             ],
             "url": "{{baseUrl}}/api/announcements?status=DRAFT&size=100"
@@ -294,6 +407,10 @@
               {
                 "key": "Accept",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
               }
             ],
             "url": "{{baseUrl}}/api/announcements/{{announcementId}}"
@@ -323,6 +440,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
               }
             ],
             "url": "{{baseUrl}}/api/announcements/{{announcementId}}",
@@ -386,6 +507,10 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
               }
             ],
             "url": "{{baseUrl}}/api/announcements",
@@ -414,6 +539,10 @@
               {
                 "key": "Accept",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
               }
             ],
             "url": "{{baseUrl}}/api/announcements/{{announcementId}}"
@@ -438,6 +567,677 @@
               {
                 "key": "Accept",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Security matrix (protected operations)",
+      "item": [
+        {
+          "name": "Setup: create a probe announcement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('announcementId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman {{runId}}\",\n  \"summary\": \"Created by the API regression suite\",\n  \"body\": \"Secret body\",\n  \"category\": \"GENERAL\",\n  \"status\": \"DRAFT\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List with no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements"
+          }
+        },
+        {
+          "name": "Detail with no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}"
+          }
+        },
+        {
+          "name": "Create with no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman {{runId}}\",\n  \"summary\": \"Created by the API regression suite\",\n  \"body\": \"Secret body\",\n  \"category\": \"GENERAL\",\n  \"status\": \"DRAFT\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update with no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman {{runId}}\",\n  \"summary\": \"Created by the API regression suite\",\n  \"body\": \"Secret body\",\n  \"category\": \"GENERAL\",\n  \"status\": \"DRAFT\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete with no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}"
+          }
+        },
+        {
+          "name": "List with malformed token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer not.a.valid.token"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements"
+          }
+        },
+        {
+          "name": "Detail with malformed token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer not.a.valid.token"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}"
+          }
+        },
+        {
+          "name": "Create with malformed token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer not.a.valid.token"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman {{runId}}\",\n  \"summary\": \"Created by the API regression suite\",\n  \"body\": \"Secret body\",\n  \"category\": \"GENERAL\",\n  \"status\": \"DRAFT\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update with malformed token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer not.a.valid.token"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman {{runId}}\",\n  \"summary\": \"Created by the API regression suite\",\n  \"body\": \"Secret body\",\n  \"category\": \"GENERAL\",\n  \"status\": \"DRAFT\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete with malformed token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer not.a.valid.token"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}"
+          }
+        },
+        {
+          "name": "List with expired token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{expiredToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements"
+          }
+        },
+        {
+          "name": "Detail with expired token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{expiredToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}"
+          }
+        },
+        {
+          "name": "Create with expired token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{expiredToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman {{runId}}\",\n  \"summary\": \"Created by the API regression suite\",\n  \"body\": \"Secret body\",\n  \"category\": \"GENERAL\",\n  \"status\": \"DRAFT\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update with expired token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{expiredToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman {{runId}}\",\n  \"summary\": \"Created by the API regression suite\",\n  \"body\": \"Secret body\",\n  \"category\": \"GENERAL\",\n  \"status\": \"DRAFT\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete with expired token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{expiredToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}"
+          }
+        },
+        {
+          "name": "Unknown id without token is 401, not 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 401', () => pm.response.to.have.status(401));",
+                  "pm.test('WWW-Authenticate: Bearer', () => pm.expect(pm.response.headers.get('WWW-Authenticate') || '').to.match(/^Bearer/));",
+                  "pm.test('no business data in the error body', () => {",
+                  "  const text = pm.response.text();",
+                  "  pm.expect(text).to.not.include('Secret body');",
+                  "  pm.expect(text).to.not.include('\"items\"');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/999999999"
+          }
+        },
+        {
+          "name": "Probe still exists (nothing was changed anonymously)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('unchanged', () => pm.expect(pm.response.json().status).to.eql('DRAFT'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/announcements/{{announcementId}}"
+          }
+        },
+        {
+          "name": "Cleanup: delete probe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
               }
             ],
             "url": "{{baseUrl}}/api/announcements/{{announcementId}}"

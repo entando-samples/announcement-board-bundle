@@ -14,6 +14,19 @@ spring:
     url: jdbc:postgresql://localhost:5432/training26
     username: training26-user
     password: training26-password
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Tokens must be issued by the Keycloak realm of the Entando
+          # application. Entando injects KEYCLOAK_AUTH_URL and KEYCLOAK_REALM
+          # into the microservice; the defaults match `ent bundle svc start keycloak`.
+          # The signing keys are discovered lazily from the issuer, so the
+          # service starts even when Keycloak is not reachable yet.
+          # If the issuer URL in the tokens is not reachable from the pod, also set
+          # SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI to an internal
+          # JWKS URL: the issuer is then still validated against issuer-uri.
+          issuer-uri: ${KEYCLOAK_AUTH_URL:http://localhost:9080/auth}/realms/${KEYCLOAK_REALM:entando-dev}
   web:
     # API messages (validation errors) are always English, whatever the client or OS locale.
     locale: en

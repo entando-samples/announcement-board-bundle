@@ -3,6 +3,7 @@ import type { MfeConfig } from './config';
 import type { AnnouncementSource } from './api/source';
 import { API_CLAIM, apiBaseUrl } from './api/http';
 import { createHttpSource } from './api/httpSource';
+import { login, useAuth } from './auth/keycloak';
 import { readContext, type BoardContext } from './context';
 import { loadFilter, saveFilter } from './filterStorage';
 import { parseBoardParams, type BoardParams } from './boardParams';
@@ -70,6 +71,7 @@ function Board({ source, context, params }: BoardProps) {
   const size = params.pageSize;
   const [page, setPage] = useState(0);
   const [results, setResults] = useState<Results>({ status: 'loading' });
+  const { authenticated } = useAuth();
 
   useEffect(() => {
     let cancelled = false;
@@ -108,6 +110,8 @@ function Board({ source, context, params }: BoardProps) {
           <AnnouncementList
             items={results.data.items}
             locale={context.locale}
+            authenticated={authenticated}
+            onSignIn={login}
             loadDetail={(id) => source.getDetail(id)}
           />
           <Pager page={results.data.page} totalPages={results.data.totalPages} onChange={setPage} />
