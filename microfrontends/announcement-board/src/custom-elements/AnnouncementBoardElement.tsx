@@ -2,10 +2,16 @@ import { StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import App from '../App';
 import { parseConfig } from '../config';
-import '../board.css';
+// Inlined as a string: page styles cannot reach into the shadow root, and a
+// global stylesheet would not reach the widget either.
+import styles from '../board.css?inline';
 
 export const ELEMENT_NAME = 'announcement-board';
 
+/**
+ * Renders the board inside an open shadow root so that portal CSS does not
+ * leak into the widget and the widget's CSS does not leak into the portal.
+ */
 export class AnnouncementBoardElement extends HTMLElement {
   private root?: Root;
 
@@ -14,8 +20,11 @@ export class AnnouncementBoardElement extends HTMLElement {
   }
 
   connectedCallback(): void {
+    const shadow = this.shadowRoot ?? this.attachShadow({ mode: 'open' });
+    const style = document.createElement('style');
+    style.textContent = styles;
     const mountPoint = document.createElement('div');
-    this.appendChild(mountPoint);
+    shadow.replaceChildren(style, mountPoint);
     this.root = createRoot(mountPoint);
     this.render();
   }
@@ -27,7 +36,7 @@ export class AnnouncementBoardElement extends HTMLElement {
   disconnectedCallback(): void {
     this.root?.unmount();
     this.root = undefined;
-    this.replaceChildren();
+    this.shadowRoot?.replaceChildren();
   }
 
   private render(): void {

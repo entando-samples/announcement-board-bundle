@@ -1,4 +1,8 @@
-/* Every rule is scoped to the widget root so the portal page is never restyled. */
+/* Loaded into the widget's shadow root (see AnnouncementBoardElement). */
+:host {
+  display: block;
+}
+
 .announcement-board {
   font-family: system-ui, sans-serif;
   color: #1f2933;

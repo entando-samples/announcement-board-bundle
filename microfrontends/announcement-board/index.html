@@ -4,8 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>announcement-board (local)</title>
+    <style>
+      /* Simulated portal CSS (row 39 demo): it styles the page heading below,
+         but cannot reach the board, which renders in a shadow root. */
+      h2, h3 { color: crimson; font-family: Georgia, serif; text-transform: uppercase; }
+      button { background: crimson; color: white; border-radius: 1rem; }
+    </style>
   </head>
   <body>
+    <h2>Portal heading styled by page CSS</h2>
     <announcement-board></announcement-board>
     <script>
       // Local stand-in for the config attribute that Entando injects at runtime.
