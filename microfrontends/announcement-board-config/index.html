@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>announcement-board-config (local)</title>
+  </head>
+  <body>
+    <announcement-board-config></announcement-board-config>
+    <button type="button" id="read-config">Read config (what App Builder saves)</button>
+    <pre id="saved-config"></pre>
+    <script>
+      // Local stand-in for App Builder: it SETS the config property when the
+      // widget settings open and GETS it when the page designer clicks Save.
+      const element = document.querySelector('announcement-board-config');
+      fetch('/mfe-config.json')
+        .then((response) => response.json())
+        .then((config) => {
+          element.config = config;
+        });
+      document.getElementById('read-config').addEventListener('click', () => {
+        document.getElementById('saved-config').textContent = JSON.stringify(element.config, null, 2);
+      });
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

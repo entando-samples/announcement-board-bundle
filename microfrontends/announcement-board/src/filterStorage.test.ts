@@ -7,12 +7,12 @@ describe('filter storage', () => {
   it('remembers the filter per page code', () => {
     saveFilter({ q: 'maintenance', category: 'MAINTENANCE' }, 'homepage');
     expect(loadFilter('homepage')).toEqual({ q: 'maintenance', category: 'MAINTENANCE' });
-    expect(loadFilter('news')).toEqual({ q: '', category: undefined });
+    expect(loadFilter('news')).toBeUndefined();
   });
 
   it('ignores corrupted or tampered values', () => {
     localStorage.setItem('announcement-board.filter.default', '{broken');
-    expect(loadFilter()).toEqual({ q: '' });
+    expect(loadFilter()).toBeUndefined();
     localStorage.setItem('announcement-board.filter.default', JSON.stringify({ q: 5, category: 'NOPE' }));
     expect(loadFilter()).toEqual({ q: '', category: undefined });
   });

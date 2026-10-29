@@ -1,0 +1,33 @@
+/* Rendered inside App Builder: every rule is scoped to the form root. */
+.announcement-board-config {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 32rem;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+}
+
+.announcement-board-config legend {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.announcement-board-config__field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.announcement-board-config__field--inline {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.announcement-board-config__error {
+  color: #b42318;
+}
+
+.announcement-board-config__notice {
+  margin: 0;
+  color: #8a4b08;
+}

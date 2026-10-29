@@ -7,16 +7,22 @@ export interface SavedFilter {
 
 const keyFor = (pageCode?: string) => `announcement-board.filter.${pageCode ?? 'default'}`;
 
-/** Last search per page; browser storage may be unavailable, so failures are ignored. */
-export function loadFilter(pageCode?: string): SavedFilter {
+/**
+ * Last search per page, or undefined when none was saved. Browser storage may
+ * be unavailable or tampered with, so failures count as "nothing saved".
+ */
+export function loadFilter(pageCode?: string): SavedFilter | undefined {
   try {
     const raw = window.localStorage.getItem(keyFor(pageCode));
-    const value = raw ? (JSON.parse(raw) as Partial<SavedFilter>) : {};
+    if (!raw) {
+      return undefined;
+    }
+    const value = JSON.parse(raw) as Partial<SavedFilter>;
     const q = typeof value.q === 'string' ? value.q.slice(0, 100) : '';
     const category = CATEGORIES.find((c) => c === value.category);
     return { q, category };
   } catch {
-    return { q: '' };
+    return undefined;
   }
 }
 

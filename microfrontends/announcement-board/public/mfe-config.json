@@ -9,5 +9,11 @@
     "contextParams": {
         "page_code": "homepage",
         "info_currentLang": "en"
+    },
+    "params": {
+        "boardTitle": "Course notices",
+        "pageSize": "5",
+        "defaultCategory": "ALL",
+        "showSearchBox": "true"
     }
 }

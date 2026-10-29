@@ -28,6 +28,12 @@ signed-in users can read full details or manage content (from step 20).
 
   Until then, build and run the MFEs with `npm run build` / `npm start` from
   their folders using a Node 20+ installation.
+
+  **Warning:** with the Node 14 runtime, `ent bundle build` and `ent bundle
+  pack` report success even though every Vite build failed (see
+  `.entando/logs/<mfe>.log`). The bundle would then ship whatever stale
+  `dist/` folder is on disk. Always run `npm run verify` in each MFE folder
+  with Node 20+ right before `ent bundle pack`.
 - Docker (local `svc` services: PostgreSQL, Keycloak)
 
 ## Steps

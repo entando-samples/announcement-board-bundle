@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { fakeSource, pageOf, SUMMARY } from './test/fakeSource';
 
@@ -86,6 +86,38 @@ describe('board App with page context', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Search' }));
 
     expect(JSON.parse(localStorage.getItem('announcement-board.filter.homepage')!)).toEqual({ q: 'meetup' });
+    localStorage.clear();
+  });
+});
+
+describe('board App configured through params', () => {
+  it('applies title, page size, default category and hides the search box', async () => {
+    const source = fakeSource();
+    const params = { boardTitle: 'Course notices', pageSize: '5', defaultCategory: 'TRAINING', showSearchBox: 'false' };
+    render(<App config={{ params }} source={source} />);
+
+    expect(await screen.findByRole('heading', { name: 'Course notices' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Search text')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Category')).toHaveValue('TRAINING');
+    expect(source.search).toHaveBeenCalledWith({ q: '', category: 'TRAINING', page: 0, size: 5 });
+  });
+
+  it('renders with defaults when params are invalid', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const source = fakeSource();
+    render(<App config={{ params: { boardTitle: '', pageSize: 'lots' } }} source={source} />);
+
+    expect(await screen.findByRole('heading', { name: 'Announcements' })).toBeInTheDocument();
+    expect(source.search).toHaveBeenCalledWith(expect.objectContaining({ size: 10 }));
+  });
+
+  it('lets a remembered search win over the default category', async () => {
+    localStorage.setItem('announcement-board.filter.default', JSON.stringify({ q: '' }));
+    const source = fakeSource();
+    render(<App config={{ params: { defaultCategory: 'EVENT' } }} source={source} />);
+    await screen.findByRole('heading', { name: SUMMARY.title });
+
+    expect(source.search).toHaveBeenCalledWith(expect.objectContaining({ category: undefined }));
     localStorage.clear();
   });
 });

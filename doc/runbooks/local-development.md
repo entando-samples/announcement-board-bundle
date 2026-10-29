@@ -19,7 +19,8 @@ References:
    (`/api/announcements/search`, …). No host is hard-coded; a missing claim URL
    is shown as a configuration error.
 
-`ent bundle api` commands need an attached instance (`ent attach-*`).
+Internal claims (`ent bundle api add`) work offline (verified with bundle CLI
+1.2.3); external claims (`api add-ext`) need an attached instance (`ent attach-*`).
 
 ## Database (from step 17)
 
