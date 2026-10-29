@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>announcement-board (local)</title>
+  </head>
+  <body>
+    <announcement-board></announcement-board>
+    <script>
+      // Local stand-in for the config attribute that Entando injects at runtime.
+      fetch('/mfe-config.json')
+        .then((response) => response.json())
+        .then((config) => {
+          document.querySelector('announcement-board').setAttribute('config', JSON.stringify(config));
+        });
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

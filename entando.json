@@ -1,9 +1,24 @@
 {
     "microservices": [],
-    "microfrontends": [],
+    "microfrontends": [
+        {
+            "name": "announcement-board",
+            "customElement": "announcement-board",
+            "stack": "react",
+            "type": "widget",
+            "group": "free",
+            "publicFolder": "public",
+            "titles": {
+                "en": "Announcement Board",
+                "it": "Bacheca Annunci"
+            },
+            "buildFolder": "dist",
+            "category": "Announcements"
+        }
+    ],
     "svc": [],
     "name": "training26",
-    "version": "0.0.6",
+    "version": "0.1.0",
     "description": "Announcement Board: Entando 7.5 developer training bundle (E101, Day 2)",
     "type": "bundle",
     "displayName": "Announcement Board"

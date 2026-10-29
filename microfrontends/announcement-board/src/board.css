@@ -1,0 +1,70 @@
+/* Every rule is scoped to the widget root so the portal page is never restyled. */
+.announcement-board {
+  font-family: system-ui, sans-serif;
+  color: #1f2933;
+  max-width: 48rem;
+}
+
+.announcement-board__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+}
+
+.announcement-board__search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.announcement-board__search input {
+  flex: 1 1 14rem;
+}
+
+.announcement-board__search input,
+.announcement-board__search select,
+.announcement-board button {
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+}
+
+.announcement-board__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.announcement-board__item {
+  border-bottom: 1px solid #d9e2ec;
+  padding: 0.75rem 0;
+}
+
+.announcement-board__item h3 {
+  margin: 0.25rem 0;
+  font-size: 1.1rem;
+}
+
+.announcement-board__item time {
+  color: #52606d;
+  font-size: 0.85rem;
+}
+
+.announcement-board__category {
+  display: inline-block;
+  background: #e4ecf7;
+  border-radius: 0.25rem;
+  padding: 0 0.4rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.announcement-board__status--error {
+  color: #b42318;
+}
+
+.announcement-board__pager {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}

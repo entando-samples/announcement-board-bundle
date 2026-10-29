@@ -19,6 +19,15 @@ signed-in users can read full details or manage content (from step 20).
 - Entando CLI 7.5 (`ent`), attached to a 7.5 instance for API claims and deploy
 - JDK 17, Maven 3.6.3+
 - Node.js 20+ (Vite 6 does not run on Node 14)
+
+  `ent` runs component commands with its own private Node (14.20.0 in ent
+  7.5.3), so `ent bundle build|run|pack` fail on the Vite MFEs out of the box.
+  Reinstall the private Node once, then re-check:
+
+      ENTANDO_NODE_VERSION_OVERRIDE=v20.19.5 ent check-env base-develop
+
+  Until then, build and run the MFEs with `npm run build` / `npm start` from
+  their folders using a Node 20+ installation.
 - Docker (local `svc` services: PostgreSQL, Keycloak)
 
 ## Steps
