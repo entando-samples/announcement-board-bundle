@@ -1,0 +1,18 @@
+# This configuration is intended for development purpose, it's **your** responsibility to harden it for production
+version: '3.7'
+
+services:
+  postgresql:
+    image: entando/entando-postgres-rocky:14.1.0
+    restart: always
+    # If you want to relocate the postgres data (volume) to your local directory, uncomment the lines below
+    # volumes:
+    #   - ~/volumes/entando-bundle-cli/training26/postgresql/:/var/lib/postgresql/data/
+    environment:
+      - POSTGRESQL_USER=training26-user
+      - POSTGRESQL_PASSWORD=training26-password
+      - POSTGRESQL_DATABASE=training26
+    # If you want to expose these ports outside your dev PC,
+    # remove the "127.0.0.1:" prefix
+    ports:
+      - 127.0.0.1:5432:5432

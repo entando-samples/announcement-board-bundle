@@ -7,8 +7,13 @@ server:
 spring:
   application:
     name: announcement-ms
+  # Local defaults match `ent bundle svc start postgresql`. In Entando the
+  # platform provisions the database (dbms: postgresql in entando.json) and
+  # overrides these through SPRING_DATASOURCE_URL/USERNAME/PASSWORD.
   datasource:
-    url: jdbc:h2:mem:announcements;DB_CLOSE_DELAY=-1
+    url: jdbc:postgresql://localhost:5432/training26
+    username: training26-user
+    password: training26-password
   web:
     # API messages (validation errors) are always English, whatever the client or OS locale.
     locale: en
@@ -16,7 +21,8 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: create-drop
+      # The schema is owned by Flyway (db/migration); Hibernate only checks it.
+      ddl-auto: validate
 
 management:
   endpoints:

@@ -3,7 +3,8 @@
         {
             "name": "announcement-ms",
             "stack": "spring-boot",
-            "healthCheckPath": "/api/health"
+            "healthCheckPath": "/api/health",
+            "dbms": "postgresql"
         }
     ],
     "microfrontends": [
@@ -54,9 +55,11 @@
             ]
         }
     ],
-    "svc": [],
+    "svc": [
+        "postgresql"
+    ],
     "name": "training26",
-    "version": "0.5.1",
+    "version": "0.6.0",
     "description": "Announcement Board: Entando 7.5 developer training bundle (E101, Day 2)",
     "type": "bundle",
     "displayName": "Announcement Board"

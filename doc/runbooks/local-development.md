@@ -21,6 +21,18 @@ References:
 
 `ent bundle api` commands need an attached instance (`ent attach-*`).
 
+## Database (from step 17)
+
+`announcement-ms` declares `dbms: postgresql`: Entando provisions a PostgreSQL
+schema at install time and injects `SPRING_DATASOURCE_URL/USERNAME/PASSWORD`.
+Locally, start the matching auxiliary service before the microservice:
+
+    ent bundle svc start postgresql     # localhost:5432, db training26
+    ent bundle svc stop postgresql
+
+Flyway (`src/main/resources/db/migration`) owns the schema; Hibernate only
+validates it. Tests use in-memory H2 in PostgreSQL mode and need no Docker.
+
 ## Local ports
 
 | Component | Command (from its folder, Node 20+) | URL |
