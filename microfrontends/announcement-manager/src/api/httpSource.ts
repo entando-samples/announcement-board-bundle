@@ -2,7 +2,7 @@ import type { Announcement, AnnouncementInput, Page } from '../types';
 import { requestJson } from './http';
 import type { ManagerSource } from './source';
 
-export function createHttpSource(baseUrl: string, fetchImpl: typeof fetch = fetch): ManagerSource {
+export function createHttpSource(baseUrl: string, fetchImpl?: typeof fetch): ManagerSource {
   const collection = `${baseUrl}/api/announcements`;
   return {
     list(page, size) {

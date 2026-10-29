@@ -68,3 +68,22 @@ describe('manager App', () => {
     expect(screen.getByLabelText('Title')).toHaveValue('Valid title');
   });
 });
+
+describe('manager App with server validation', () => {
+  it('shows server-side field errors on the form', async () => {
+    const { ApiError } = await import('./api/http');
+    const rejecting: ManagerSource = {
+      ...createMemorySource(),
+      create: () =>
+        Promise.reject(new ApiError(400, 'Request validation failed', { summary: 'must not be blank' })),
+    };
+    render(<App config={{}} source={rejecting} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'New announcement' }));
+    await fillForm('Valid title');
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByText('must not be blank')).toBeInTheDocument();
+    expect(screen.getByLabelText('Summary')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByRole('alert')).toHaveTextContent('Request validation failed');
+  });
+});

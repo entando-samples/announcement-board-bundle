@@ -24,7 +24,7 @@ export function apiBaseUrl(config: MfeConfig): string | undefined {
 export async function requestJson<T>(
   url: string,
   init: RequestInit = {},
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl?: typeof fetch,
 ): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set('Accept', 'application/json');
@@ -33,7 +33,8 @@ export async function requestJson<T>(
   }
   let response: Response;
   try {
-    response = await fetchImpl(url, { ...init, headers });
+    // Resolve fetch per call so test doubles installed later are honoured.
+    response = await (fetchImpl ?? fetch)(url, { ...init, headers });
   } catch {
     throw new ApiError(0, 'The announcement service is unreachable.');
   }

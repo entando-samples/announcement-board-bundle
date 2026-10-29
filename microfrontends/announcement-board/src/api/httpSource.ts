@@ -2,7 +2,7 @@ import type { AnnouncementDetail, AnnouncementSummary, Page, SearchQuery } from 
 import { getJson } from './http';
 import type { AnnouncementSource } from './source';
 
-export function createHttpSource(baseUrl: string, fetchImpl: typeof fetch = fetch): AnnouncementSource {
+export function createHttpSource(baseUrl: string, fetchImpl?: typeof fetch): AnnouncementSource {
   return {
     search({ q, category, page, size }: SearchQuery) {
       const params = new URLSearchParams({ page: String(page), size: String(size) });

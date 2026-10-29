@@ -19,10 +19,11 @@ export function apiBaseUrl(config: MfeConfig): string | undefined {
   return url ? url.replace(/\/+$/, '') : undefined;
 }
 
-export async function getJson<T>(url: string, fetchImpl: typeof fetch = fetch): Promise<T> {
+export async function getJson<T>(url: string, fetchImpl?: typeof fetch): Promise<T> {
   let response: Response;
   try {
-    response = await fetchImpl(url, { headers: { Accept: 'application/json' } });
+    // Resolve fetch per call so test doubles installed later are honoured.
+    response = await (fetchImpl ?? fetch)(url, { headers: { Accept: 'application/json' } });
   } catch {
     throw new ApiError(0, 'The announcement service is unreachable.');
   }
