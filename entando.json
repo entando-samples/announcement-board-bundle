@@ -1,5 +1,11 @@
 {
-    "microservices": [],
+    "microservices": [
+        {
+            "name": "announcement-ms",
+            "stack": "spring-boot",
+            "healthCheckPath": "/api/health"
+        }
+    ],
     "microfrontends": [
         {
             "name": "announcement-board",
@@ -32,7 +38,7 @@
     ],
     "svc": [],
     "name": "training26",
-    "version": "0.2.2",
+    "version": "0.3.0",
     "description": "Announcement Board: Entando 7.5 developer training bundle (E101, Day 2)",
     "type": "bundle",
     "displayName": "Announcement Board"

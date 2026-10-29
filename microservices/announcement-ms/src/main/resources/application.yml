@@ -1,0 +1,39 @@
+server:
+  # Entando requires microservices to listen on 8081.
+  port: 8081
+  # Honour X-Forwarded-* from the Entando ingress when building Location headers.
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: announcement-ms
+  datasource:
+    url: jdbc:h2:mem:announcements;DB_CLOSE_DELAY=-1
+  web:
+    # API messages (validation errors) are always English, whatever the client or OS locale.
+    locale: en
+    locale-resolver: fixed
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+
+management:
+  endpoints:
+    web:
+      # Health is served at /api/health, the healthCheckPath declared in entando.json.
+      base-path: /api
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+announcement:
+  cors:
+    # Local micro frontends run on the Vite dev server. In Entando the widgets
+    # and the microservice share the application host, so CORS is not involved.
+    allowed-origin-patterns: http://localhost:*,http://127.0.0.1:*
+  seed:
+    # Inserts a few sample announcements into an empty database (training convenience).
+    enabled: true
