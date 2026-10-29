@@ -5,5 +5,9 @@
                 "url": "http://localhost:8081"
             }
         }
+    },
+    "contextParams": {
+        "page_code": "homepage",
+        "info_currentLang": "en"
     }
 }

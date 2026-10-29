@@ -3,6 +3,7 @@ import type { AnnouncementDetail, AnnouncementSummary } from '../types';
 
 interface AnnouncementListProps {
   items: AnnouncementSummary[];
+  locale: string;
   loadDetail: (id: number) => Promise<AnnouncementDetail>;
 }
 
@@ -11,8 +12,9 @@ type DetailState =
   | { status: 'error'; message: string }
   | { status: 'ready'; body: string };
 
-export default function AnnouncementList({ items, loadDetail }: AnnouncementListProps) {
+export default function AnnouncementList({ items, locale, loadDetail }: AnnouncementListProps) {
   const [details, setDetails] = useState<Record<number, DetailState>>({});
+  const dateFormat = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
 
   if (items.length === 0) {
     return <p className="announcement-board__status">No announcements match your search.</p>;
@@ -35,7 +37,7 @@ export default function AnnouncementList({ items, loadDetail }: AnnouncementList
           <li key={item.id} className="announcement-board__item">
             <span className="announcement-board__category">{item.category}</span>
             <h3>{item.title}</h3>
-            <time dateTime={item.publishedAt}>{new Date(item.publishedAt).toLocaleDateString()}</time>
+            <time dateTime={item.publishedAt}>{dateFormat.format(new Date(item.publishedAt))}</time>
             <p>{item.summary}</p>
             {!detail && (
               <button type="button" onClick={() => readMore(item.id)}>

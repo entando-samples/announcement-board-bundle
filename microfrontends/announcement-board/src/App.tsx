@@ -3,6 +3,8 @@ import type { MfeConfig } from './config';
 import type { AnnouncementSource } from './api/source';
 import { API_CLAIM, apiBaseUrl } from './api/http';
 import { createHttpSource } from './api/httpSource';
+import { readContext, type BoardContext } from './context';
+import { loadFilter, saveFilter } from './filterStorage';
 import type { AnnouncementSummary, Category, Page } from './types';
 import SearchForm from './components/SearchForm';
 import AnnouncementList from './components/AnnouncementList';
@@ -22,6 +24,7 @@ type Results =
 
 export default function App({ config, source: providedSource }: AppProps) {
   const baseUrl = apiBaseUrl(config);
+  const { pageCode, locale } = readContext(config);
   const source = useMemo(
     () => providedSource ?? (baseUrl ? createHttpSource(baseUrl) : undefined),
     [providedSource, baseUrl],
@@ -36,12 +39,14 @@ export default function App({ config, source: providedSource }: AppProps) {
       </section>
     );
   }
-  return <Board source={source} />;
+  // Keyed by page so each placement keeps its own remembered filter.
+  return <Board key={pageCode ?? ''} source={source} context={{ pageCode, locale }} />;
 }
 
-function Board({ source }: { source: AnnouncementSource }) {
-  const [q, setQ] = useState('');
-  const [category, setCategory] = useState<Category | undefined>();
+function Board({ source, context }: { source: AnnouncementSource; context: BoardContext }) {
+  const [initial] = useState(() => loadFilter(context.pageCode));
+  const [q, setQ] = useState(initial.q);
+  const [category, setCategory] = useState<Category | undefined>(initial.category);
   const [page, setPage] = useState(0);
   const [results, setResults] = useState<Results>({ status: 'loading' });
 
@@ -58,7 +63,7 @@ function Board({ source }: { source: AnnouncementSource }) {
   }, [source, q, category, page]);
 
   return (
-    <section className="announcement-board" aria-label="Announcements">
+    <section className="announcement-board" aria-label="Announcements" data-page-code={context.pageCode}>
       <h2 className="announcement-board__title">Announcements</h2>
       <SearchForm
         initialText={q}
@@ -67,6 +72,7 @@ function Board({ source }: { source: AnnouncementSource }) {
           setQ(text);
           setCategory(selected);
           setPage(0);
+          saveFilter({ q: text, category: selected }, context.pageCode);
         }}
       />
       {results.status === 'loading' && <p className="announcement-board__status">Loading…</p>}
@@ -77,7 +83,11 @@ function Board({ source }: { source: AnnouncementSource }) {
       )}
       {results.status === 'ready' && (
         <>
-          <AnnouncementList items={results.data.items} loadDetail={(id) => source.getDetail(id)} />
+          <AnnouncementList
+            items={results.data.items}
+            locale={context.locale}
+            loadDetail={(id) => source.getDetail(id)}
+          />
           <Pager page={results.data.page} totalPages={results.data.totalPages} onChange={setPage} />
         </>
       )}

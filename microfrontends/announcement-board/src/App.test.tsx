@@ -56,3 +56,36 @@ describe('board App', () => {
     expect(source.search).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1 }));
   });
 });
+
+describe('board App with page context', () => {
+  const contextConfig = { contextParams: { page_code: 'homepage', info_currentLang: 'it' } };
+
+  it('formats dates in the page language', async () => {
+    render(<App config={contextConfig} source={fakeSource()} />);
+    const expected = new Intl.DateTimeFormat('it', { dateStyle: 'medium' }).format(new Date(SUMMARY.publishedAt));
+    expect(await screen.findByText(expected)).toBeInTheDocument();
+  });
+
+  it('restores the last search of the same page', async () => {
+    localStorage.setItem(
+      'announcement-board.filter.homepage',
+      JSON.stringify({ q: 'cluster', category: 'MAINTENANCE' }),
+    );
+    const source = fakeSource();
+    render(<App config={contextConfig} source={source} />);
+    await screen.findByRole('heading', { name: SUMMARY.title });
+
+    expect(source.search).toHaveBeenCalledWith({ q: 'cluster', category: 'MAINTENANCE', page: 0, size: 10 });
+    expect(screen.getByLabelText('Search text')).toHaveValue('cluster');
+    localStorage.clear();
+  });
+
+  it('saves a new search for the page', async () => {
+    render(<App config={contextConfig} source={fakeSource()} />);
+    await userEvent.type(await screen.findByLabelText('Search text'), 'meetup');
+    await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+    expect(JSON.parse(localStorage.getItem('announcement-board.filter.homepage')!)).toEqual({ q: 'meetup' });
+    localStorage.clear();
+  });
+});
