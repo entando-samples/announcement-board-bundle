@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
@@ -14,5 +15,10 @@ export default defineConfig(({ command }) => ({
       fileName: () => 'announcement-board.js',
       cssFileName: 'announcement-board',
     },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['src/test/setup.ts'],
+    restoreMocks: true,
   },
 }));

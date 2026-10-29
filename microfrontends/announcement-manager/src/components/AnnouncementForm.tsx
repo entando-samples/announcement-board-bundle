@@ -8,6 +8,8 @@ interface AnnouncementFormProps {
   onCancel: () => void;
 }
 
+const ID_PREFIX = 'announcement-manager';
+
 const EMPTY: AnnouncementInput = {
   title: '',
   summary: '',
@@ -58,66 +60,66 @@ export default function AnnouncementForm({ initial, onSubmit, onCancel }: Announ
     }
   };
 
+  const fieldProps = (key: 'title' | 'summary' | 'body') => ({
+    id: `${ID_PREFIX}-${key}`,
+    value: values[key],
+    onChange: (e: { target: { value: string } }) => set(key, e.target.value),
+    'aria-invalid': Boolean(errors[key]),
+    'aria-describedby': errors[key] ? `${ID_PREFIX}-${key}-error` : undefined,
+  });
+
   const fieldError = (key: keyof AnnouncementInput) =>
     errors[key] && (
-      <span id={`${key}-error`} className="announcement-manager__field-error">
+      <span id={`${ID_PREFIX}-${key}-error`} className="announcement-manager__field-error">
         {errors[key]}
       </span>
     );
 
   return (
     <form className="announcement-manager__form" onSubmit={submit} noValidate>
-      <label>
-        Title
-        <input
-          value={values.title}
-          onChange={(e) => set('title', e.target.value)}
-          aria-invalid={Boolean(errors.title)}
-          aria-describedby={errors.title ? 'title-error' : undefined}
-        />
+      <div className="announcement-manager__field">
+        <label htmlFor={`${ID_PREFIX}-title`}>Title</label>
+        <input {...fieldProps('title')} />
         {fieldError('title')}
-      </label>
-      <label>
-        Summary
-        <input
-          value={values.summary}
-          onChange={(e) => set('summary', e.target.value)}
-          aria-invalid={Boolean(errors.summary)}
-          aria-describedby={errors.summary ? 'summary-error' : undefined}
-        />
+      </div>
+      <div className="announcement-manager__field">
+        <label htmlFor={`${ID_PREFIX}-summary`}>Summary</label>
+        <input {...fieldProps('summary')} />
         {fieldError('summary')}
-      </label>
-      <label>
-        Body
-        <textarea
-          rows={5}
-          value={values.body}
-          onChange={(e) => set('body', e.target.value)}
-          aria-invalid={Boolean(errors.body)}
-          aria-describedby={errors.body ? 'body-error' : undefined}
-        />
+      </div>
+      <div className="announcement-manager__field">
+        <label htmlFor={`${ID_PREFIX}-body`}>Body</label>
+        <textarea rows={5} {...fieldProps('body')} />
         {fieldError('body')}
-      </label>
-      <label>
-        Category
-        <select value={values.category} onChange={(e) => set('category', e.target.value as AnnouncementInput['category'])}>
+      </div>
+      <div className="announcement-manager__field">
+        <label htmlFor={`${ID_PREFIX}-category`}>Category</label>
+        <select
+          id={`${ID_PREFIX}-category`}
+          value={values.category}
+          onChange={(e) => set('category', e.target.value as AnnouncementInput['category'])}
+        >
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
               {c}
             </option>
           ))}
         </select>
-      </label>
-      <label>
-        Status
-        <select value={values.status} onChange={(e) => set('status', e.target.value as AnnouncementInput['status'])}>
+      </div>
+      <div className="announcement-manager__field">
+        <label htmlFor={`${ID_PREFIX}-status`}>Status</label>
+        <select
+          id={`${ID_PREFIX}-status`}
+          value={values.status}
+          onChange={(e) => set('status', e.target.value as AnnouncementInput['status'])}
+        >
           {STATUSES.map((s) => (
             <option key={s} value={s}>
               {s}
             </option>
           ))}
         </select>
-      </label>
+      </div>
       {submitError && (
         <p className="announcement-manager__error" role="alert">
           {submitError}
